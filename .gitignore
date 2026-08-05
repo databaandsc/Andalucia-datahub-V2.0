@@ -1,0 +1,11 @@
+# Entornos y dependencias de Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Variables de entorno
+.env
+
+# Datos locales (Para no saturar GitHub con los JSON crudos)
+data/

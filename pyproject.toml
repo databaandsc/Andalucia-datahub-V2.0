@@ -1,0 +1,17 @@
+[project]
+name = "andalucia-datahub-v2-0"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Ricardo Fernández Chamorro",email = "databaandsc@gmail.com"}
+]
+requires-python = ">=3.14"
+dependencies = [
+]
+
+[tool.poetry]
+packages = [{include = "andalucia_datahub_v2"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
