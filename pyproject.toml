@@ -7,7 +7,8 @@ authors = [
 ]
 requires-python = ">=3.14"
 dependencies = [
-    "requests (>=2.34.2,<3.0.0)"
+    "requests (>=2.34.2,<3.0.0)",
+    "polars (>=1.43.2,<2.0.0)"
 ]
 
 [tool.poetry]
