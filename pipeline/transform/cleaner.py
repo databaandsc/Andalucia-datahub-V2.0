@@ -59,8 +59,17 @@ def explore_ieca_data(input_filename: str = "raw_data.json"):
     
     print("\n=== TIPOS DE DATOS INICIALES ===")
     print(df.schema)
+    
+    # 5. Definimos la ruta de salida en la carpeta data
+    output_path = root_dir / "data" / "cleaned_data.parquet"
+    
+    # 6. Guardamos la tabla
+    df.write_parquet(output_path)
+    print(f" Datos limpios guardados exitosamente en: {output_path}")
+    
 
     return df
 
 if __name__ == "__main__":
     explore_ieca_data()
+    
