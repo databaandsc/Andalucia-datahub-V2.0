@@ -1,11 +1,11 @@
-import polars as pl
 import json
 from pathlib import Path
+import polars as pl
 
 def explore_ieca_data(input_filename: str = "raw_data.json"):
     """
     Lee el archivo JSON local crudo y lo carga en un DataFrame de Polars
-    para comenzar la exploración y limpieza.
+    para extraer tanto los códigos oficiales como las descripciones.
     """
     # 1. Localizar el archivo en nuestra carpeta 'data'
     root_dir = Path(__file__).parent.parent.parent
@@ -26,50 +26,64 @@ def explore_ieca_data(input_filename: str = "raw_data.json"):
          print("No se encontró la clave 'data' o el array está vacío.")
          return None
 
-    print(f"Inyectando {len(datos_crudos)} filas")
+    print(f"Procesando {len(datos_crudos)} filas...")
     
- # 3. Creación del DataFrame
-    # orient="row" fuerza a que cada lista interna del JSON sea una nueva fila (observación)
+    # 3. Creación del DataFrame base
     df = pl.DataFrame(datos_crudos, orient="row")
     
-    # Bautizamos las columnas usando el conocimiento de negocio que ya tienes
+    # Bautizamos las columnas originales temporalmente
     df = df.rename({
-        "column_0": "sector",
-        "column_1": "periodo",
-        "column_2": "territorio",
-        "column_3": "tipo_dato",
-        "column_4": "valor"
+        "column_0": "sector_raw",
+        "column_1": "periodo_raw",
+        "column_2": "territorio_raw",
+        "column_3": "tipo_dato_raw",
+        "column_4": "valor_raw"
     })
     
-    # 4. Aplanamos los structs para que cada campo sea una columna separada
+    # Aplanamos los structs para extraer códigos y descripciones oficiales
     df = df.with_columns([
-        # Entramos al struct y sacamos el campo 'des' (Descripción)
-        pl.col("sector").struct.field("des").alias("sector"),
-        pl.col("periodo").struct.field("des").alias("periodo"),
-        pl.col("territorio").struct.field("des").alias("territorio"),
-        pl.col("tipo_dato").struct.field("des").alias("tipo_dato"),
+        # SECTOR: Código y descripción
+        pl.col("sector_raw").struct.field("cod").list.get(0).alias("codigo_sector"),
+        pl.col("sector_raw").struct.field("des").alias("sector"),
         
-        # En el valor sacamos 'val' y lo forzamos a ser un número decimal (Float64)
-        pl.col("valor").struct.field("val").cast(pl.Float64).alias("valor")
+        # PERIODO: Código y descripción
+        pl.col("periodo_raw").struct.field("cod").list.get(0).alias("codigo_periodo"),
+        pl.col("periodo_raw").struct.field("des").alias("periodo"),
+        
+        # TERRITORIO: Código y descripción
+        pl.col("territorio_raw").struct.field("cod").list.get(0).alias("codigo_territorio"),
+        pl.col("territorio_raw").struct.field("des").alias("territorio"),
+        
+        # TIPO DE DATO
+        pl.col("tipo_dato_raw").struct.field("des").alias("tipo_dato"),
+        
+        # VALOR: Extraído y convertido a Float64
+        pl.col("valor_raw").struct.field("val").cast(pl.Float64).alias("valor")
     ])
 
-    # 4. Imprimimos un vistazo rápido al DataFrame
-    print("\n=== VISTAZO AL DATAFRAME CRUDO ===")
+    # Seleccionamos estrictamente el orden y las columnas limpias finales
+    df = df.select([
+        "codigo_sector", "sector",
+        "codigo_territorio", "territorio",
+        "codigo_periodo", "periodo",
+        "tipo_dato", "valor"
+    ])
+
+    # 4. Imprimimos un vistazo rápido para verificar
+    print("\n=== VISTAZO AL DATAFRAME LIMPIO ===")
     print(df.head(5))  
     
-    print("\n=== TIPOS DE DATOS INICIALES ===")
+    print("\n=== ESQUEMA FINAL DEL DATAFRAME ===")
     print(df.schema)
     
     # 5. Definimos la ruta de salida en la carpeta data
     output_path = root_dir / "data" / "cleaned_data.parquet"
     
-    # 6. Guardamos la tabla
+    # 6. Guardamos el nuevo Parquet enriquecido
     df.write_parquet(output_path)
-    print(f" Datos limpios guardados exitosamente en: {output_path}")
-    
+    print(f"Datos limpios con códigos guardados exitosamente en: {output_path}")
 
     return df
 
 if __name__ == "__main__":
     explore_ieca_data()
-    
