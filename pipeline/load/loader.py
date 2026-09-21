@@ -62,8 +62,64 @@ class PostgresLoader:
                 })
                 
         print("Dimensiones cargadas correctamente en PostgreSQL")
+        
+    def load_facts(self):
+        print("\n Iniciando carga de la tabla de hechos (registro_empleos)...")
+        df = pl.read_parquet(self.parquet_path)
+        
+        # 1. Recuperamos los IDs reales generados por PostgreSQL
+        query_sectores = "SELECT id AS id_sector, codigo_sector FROM sector"
+        query_territorios = "SELECT id AS id_territorio, codigo_territorio FROM territorio"
+        
+        sectores_db = pl.read_database(query=query_sectores, connection=self.engine)
+        territorios_db = pl.read_database(query=query_territorios, connection=self.engine)
+        
+        # 2. Cruzamos (JOIN) los datos del Parquet con los diccionarios
+        df_hechos = df.join(sectores_db, on="codigo_sector", how="inner")
+        df_hechos = df_hechos.join(territorios_db, on="codigo_territorio", how="inner")
+        
+        # 3. Preparar columnas: anio, trimestre, puestos
+        
+        df_final = df_hechos.with_columns([
+            # Cortamos los primeros 4 caracteres para el año
+            pl.col("codigo_periodo").str.slice(0, 4).cast(pl.Int32).alias("anio"),
+            # Cortamos el último carácter para el trimestre
+            pl.col("codigo_periodo").str.slice(4, 1).cast(pl.Int32).alias("trimestre"),
+            # Convertimos el valor a número entero para los puestos
+            pl.col("valor").cast(pl.Int32).alias("puestos")
+        ])
+        
+        # Seleccionamos estrictamente lo que va a la base de datos
+        df_final = df_final.select([
+            "id_sector",
+            "id_territorio",
+            "anio",
+            "trimestre",
+            "puestos"
+        ]).drop_nulls()
+        
+        print(f"Preparados {len(df_final)} registros listos para inyectar.")
+        
+        # 4. Inserción masiva en PostgreSQL
+        with self.engine.begin() as connection:
+            for row in df_final.iter_rows(named=True):
+                query_insert = text("""
+                    INSERT INTO registro_empleos (id_sector, id_territorio, anio, trimestre, puestos)
+                    VALUES (:id_sec, :id_ter, :anio, :trim, :puestos)
+                    ON CONFLICT DO NOTHING
+                """)
+                connection.execute(query_insert, {
+                    "id_sec": row["id_sector"],
+                    "id_ter": row["id_territorio"],
+                    "anio": row["anio"],
+                    "trim": row["trimestre"],
+                    "puestos": row["puestos"]
+                })
+                
+        print("Tabla de hechos cargada exitosamente.")
 
 if __name__ == "__main__":
     loader = PostgresLoader()
     loader.inspect_data()
     loader.load_dimensions()
+    loader.load_facts()

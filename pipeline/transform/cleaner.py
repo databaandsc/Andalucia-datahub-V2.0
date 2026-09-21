@@ -16,7 +16,7 @@ def explore_ieca_data(input_filename: str = "raw_data.json"):
 
     print(f"Leyendo el archivo local: {input_filename}...")
     
-    # 2. Cargar el JSON con la librería estándar de Python
+    # 2. Cargar el JSON 
     with open(file_path, "r", encoding="utf-8") as f:
         raw_json = json.load(f)
         
