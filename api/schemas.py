@@ -5,7 +5,7 @@ from pydantic import BaseModel
 class SectorResponse(BaseModel):
     id: int
     codigo_sector: str
-    descripcion_sector: str
+    descripcion_sector: str | None = None
     
     class Config:
         from_attributes = True
@@ -13,7 +13,7 @@ class SectorResponse(BaseModel):
 class TerritorioResponse(BaseModel):
     id: int
     codigo_territorio: str
-    descripcion_territorio: str
+    descripcion_territorio: str | None = None
     
     class Config:
         from_attributes = True
