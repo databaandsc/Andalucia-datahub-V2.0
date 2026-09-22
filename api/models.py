@@ -36,7 +36,7 @@ class RegistroEmpleo(Base):
     # Resto de columnas
     anio = Column(Integer, nullable=False)
     trimestre = Column(Integer, nullable=False)
-    tipo_dato = Column(String, nullable=False)
+    puestos = Column(Integer, nullable=False)
     
     # Relaciones (ORM)
     sector = relationship("Sector")
