@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from api import models, schemas
 from api.database import get_db
-from api.routers import sectores, territorios
+from api.routers import sectores, territorios, empleos
 
 # 1. Instanciamos la aplicación principal. 
 app = FastAPI(
@@ -14,6 +14,7 @@ app = FastAPI(
 # Le decimos a la app principal que enchufe el bloque de rutas de sectores
 app.include_router(sectores.router)
 app.include_router(territorios.router)
+app.include_router(empleos.router)
 
 @app.get("/")
 def read_root():
