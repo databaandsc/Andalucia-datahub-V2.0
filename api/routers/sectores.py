@@ -15,10 +15,9 @@ router = APIRouter(
 @router.get("/", response_model=list[schemas.SectorResponse])
 def obtener_sectores(db: Session = Depends(get_db)):
     """
-    Devuelve una lista de registros de sectores, limitados por defecto a 10 resultados
-    para no sobrecargar la respuesta.
+    Devuelve una lista de todos los registros de sectores
     """
-    # 1. Hacemos la consulta a PostgreSQL usando el modelo
+    # Hacemos la consulta a PostgreSQL
     sectores = db.query(models.Sector).all()
     return sectores
 
