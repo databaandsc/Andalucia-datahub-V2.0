@@ -1,5 +1,3 @@
-
-
 services:
   db:
     image: postgres:16
@@ -25,7 +23,20 @@ services:
       # Construimos la URL usando las variables seguras y apuntamos a 'db'
       DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD_ENCODED}@db:5432/${DB_NAME}
 
+  # Añadimos el nuevo servicio de Flyway justo aquí, alineado con db y api
+  flyway:
+    image: flyway/flyway:10-alpine
+    container_name: datahub_flyway
+    depends_on:
+      - db
+    environment:
+      FLYWAY_URL: jdbc:postgresql://db:5432/${DB_NAME}
+      FLYWAY_USER: ${DB_USER}
+      FLYWAY_PASSWORD: ${DB_PASSWORD_RAW}
+    volumes:
+      - ./sql:/flyway/sql
+    command: migrate
+
+# OJO: Esta etiqueta de volumes va al final del todo, pegada al borde izquierdo
 volumes:
   postgres_data:
-
-  
